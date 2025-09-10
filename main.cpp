@@ -71,11 +71,26 @@ int create_tcp_socket() {
     return sockfd;
 }
 
-std::vector<std::string> parse_headers(const std::string& raw_headers) {
+std::unordered_map<std::string, std::string> parse_headers(const std::string& raw_headers) {
+    /*   TODO:
+     *      - this is mad spaghetti (its okay for now since its a prototype, since will be moving to OOP design after the prototype)
+     *          - cleanup conditional statement flow by maybe converting to a switch statement flow instead, it will look way better.
+     *          - change things to a const type where applicable, will be faster.
+     *
+     *
+     *
+     */
     std::string header {};
     size_t i {0};
     std::vector<std::string> parsed_vec {};
     std::unordered_map<std::string, std::string> headers_map {};
+
+    /* =================================================================
+     * Below we split up the request string into n strings where
+     * first line is the start line followed by a bunch of request
+     * header pairs.
+     * =================================================================
+     */
 
     while (i < raw_headers.length()) {
         if (raw_headers[i] != '\n' && raw_headers[i] != '\r') {
@@ -84,45 +99,79 @@ std::vector<std::string> parse_headers(const std::string& raw_headers) {
             header.push_back(' ');
             parsed_vec.push_back(header);
             header.clear();
+            ++i;
         }
         ++i;
     }
+
+
+    for (auto vec : parsed_vec) {
+        std::cout << vec << "\n";
+    }
+    /* =================================================================
+     * Below we tokenise the request line into key-value pairs.
+     *
+     * E.g.,
+     *
+     * key : value
+     * HTTP_METHOD: POST
+     * HTTP_URL: /submit-form
+     * HTTP_VERSION: HTTP/1.1
+     * Content-Type: application/x-www-form-urlencoded
+     * Content-Length: 27
+     *  ...
+     *
+     * =================================================================
+     */
 
     for (size_t i{0}; i < parsed_vec.size(); i++) {
         std::string header_token {};
         if (i == 0) {
             size_t j{0};
-            int count = 0;
-            while (j < parsed_vec[i].length()) {
-                if (parsed_vec[i][j] != ':' && parsed_vec[i][j] != ' ') {
-                    header_token.push_back(parsed_vec[i][j]);
+            int count{0};
+            while (j < parsed_vec[0].length()) {
+                if (parsed_vec[0][j] != ' ') {
+                    header_token.push_back(parsed_vec[0][j]);
                 } else {
                     if (count == 0) {
-                        headers_map.insert({"http_method", header_token});
+                        headers_map.insert({"HTTP_METHOD", header_token});
                     } else if (count == 1) {
-                        headers_map.insert({"url", header_token});
-                    } else {
-                        headers_map.insert({"http_version", header_token});
+                        headers_map.insert({"HTTP_URL", header_token});
+                    } else if (count == 2) {
+                        headers_map.insert({"HTTP_VERSION", header_token});
                     }
+                    std::cout << count << "\n";
                     ++count;
                     header_token.clear();
                 }
                 ++j;
             }
         } else {
-            int count = 0;
             size_t j{0};
-            std::array<std::string, 2> header_token_pair {};
+            int count{0};
+            std::array<std::string, 2> header_token_pair{};
             while (j < parsed_vec[i].length()) {
-                if (parsed_vec[i][j] != ':' && parsed_vec[i][j] != ' ') {
-                    header_token.push_back(parsed_vec[i][j]);
+                if (parsed_vec[i][j] == ' ') {
+                    if (count == 0) {
+                        header_token_pair[0] = header_token;
+                        ++count;
+                    } else {
+                        header_token_pair[1] = header_token;
+                        headers_map.insert({header_token_pair[0], header_token_pair[1]});
+                        count = 0;
+                    }
+                    header_token.clear();
+                } else if (parsed_vec[i][j] == '\r' || parsed_vec[i][j] == '\n') {
+                    ;
                 } else {
-                    if 
+                    header_token.push_back(parsed_vec[i][j]);
                 }
+                ++j;
             }
-
         }
     }
+
+    return headers_map;
 }
 
 
@@ -151,14 +200,8 @@ std::string readHttpRequest(const int client_sockfd) {
         size_t header_end_pos = request.find("\r\n\r\n");
 
         if (header_end_pos != std::string::npos) {
-
-
         }
-
-
     }
-
-
 }
 
 int accept_client_connection(const int sockfd) {
@@ -200,26 +243,20 @@ void handle_client(const int client_sockfd, ThreadManager& thread_manager) {
 
 
 int main() {
-    // ThreadManager thread_manager = ThreadManager();
-    // std::vector<std::thread> thread_pool {};
-    // int sockfd {create_tcp_socket()};
-    // std::cout << "waiting for a client to connect..." << "\n";
-    //
-    //
-    // while (true) {
-    //     int client_sockfd {accept_client_connection(sockfd)};
-    //     std::cout << "Accepted client on socket fd: " << client_sockfd << "\n";
-    //     if (thread_manager.get_count() < MAX_THREADS) {
-    //         thread_manager.increment();
-    //         thread_pool.emplace_back(handle_client, client_sockfd, std::ref(thread_manager));
-    //
-    //     }
-    // }
-    std::string raw_data("POST /submit-form HTTP/1.1\r\nHost: www.example.com\r\nUser-Agent: MyBrowser/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 27\r\nConnection: keep-alive\r\n\r\nname=Juwon&age=21&city=Seoul");
-    auto headers = parse_headers(raw_data);
+    ThreadManager thread_manager = ThreadManager();
+    std::vector<std::thread> thread_pool {};
+    int sockfd {create_tcp_socket()};
+    std::cout << "waiting for a client to connect..." << "\n";
 
-    for (int i{0}; i < headers.size(); i++) {
-        std::cout << headers[i] << "\n";
+
+    while (true) {
+        int client_sockfd {accept_client_connection(sockfd)};
+        std::cout << "Accepted client on socket fd: " << client_sockfd << "\n";
+        if (thread_manager.get_count() < MAX_THREADS) {
+            thread_manager.increment();
+            thread_pool.emplace_back(handle_client, client_sockfd, std::ref(thread_manager));
+
+        }
     }
 }
 
