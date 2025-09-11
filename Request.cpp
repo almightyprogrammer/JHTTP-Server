@@ -5,11 +5,12 @@
 #include "Request.h"
 #include "HttpMethod.h"
 
+Request::Request() : method(HttpMethod::UNKNOWN), url(), headers(), body() {}
 
 Request::Request(HttpMethod method,
         std::string url,
         std::unordered_map<std::string,std::string> headers,
-        std::string body)
+        std::unordered_map<std::string,std::string> body)
     : method(method),
       url(std::move(url)),
       headers(std::move(headers)),
@@ -26,6 +27,6 @@ const std::unordered_map<std::string, std::string>& Request::get_headers() const
     return headers;
 };
 
-const std::string& Request::get_body() const {
+const std::unordered_map<std::string,std::string>& Request::get_body() const {
     return body;
 };

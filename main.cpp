@@ -14,6 +14,7 @@
 #include <array>
 #include <unordered_map>
 #include "ThreadManager.h"
+#include "Request.h"
 
 
 const char* PORT = "6511";
@@ -78,7 +79,7 @@ int create_tcp_socket() {
 std::unordered_map<std::string, std::string> parse_headers(const std::string& raw_headers) {
     /*   TODO:
      *      - this is mad spaghetti (its okay for now since its a prototype, since will be moving to OOP design after the prototype)
-     *          - cleanup conditional statement flow by maybe converting to a switch statement flow instead, it will look way better.
+     *          - cleanup conditional statement flow
      *          - change things to a const type where applicable, will be faster.
      *
      *
@@ -177,15 +178,19 @@ std::unordered_map<std::string, std::string> parse_headers(const std::string& ra
 
     return headers_map;
 }
+std::unordered_map<std::string, std::string> parse_body(std::string request) {
+    throw std::logic_error("Not implemented yet");
+}
 
-
-std::unordered_map<std::string, std::string> readHttpRequest(const int client_sockfd) {
+Request readHttpRequest(const int client_sockfd) {
     std::vector<char> buffer(BUFFER_SIZE);
     std::string request{};
     ssize_t bytes_read{};
     std::unordered_map<std::string, std::string> headers_map{};
+    std::unordered_map<std::string, std::string> body_map{};
     int content_length = 0;
     size_t content_begin_idx = 0;
+    Request http_request{};
 
     while (true) {
         bytes_read = recv(client_sockfd, buffer.data(), buffer.size(), 0);
@@ -225,7 +230,41 @@ std::unordered_map<std::string, std::string> readHttpRequest(const int client_so
     *  Using the headers and the body construct a new Request object and return this.
     *
     */
-    return parse_headers(request);
+
+    HttpMethod method {};
+    std::string url {headers_map.find("HTTP_URL")->second};
+
+
+    for (const auto& header_pair : headers_map) {
+        std::string method_string = header_pair.first;
+        if (method_string == "GET") {
+            method = HttpMethod::GET;
+        } else if (method_string == "POST") {
+            method = HttpMethod::POST;
+        } else if (method_string == "PUT") {
+            method = HttpMethod::PUT;
+        } else if (method_string == "PATCH") {
+            method = HttpMethod::PATCH;
+        } else if (method_string == "DELETE") {
+            method = HttpMethod::DELETE;
+        } else if (method_string == "HEAD") {
+            method = HttpMethod::HEAD;
+        } else if (method_string == "OPTIONS") {
+            method = HttpMethod::OPTIONS;
+        } else if (method_string == "UNKNOWN") {
+            method = HttpMethod::UNKNOWN;
+        }
+    }
+
+
+    if (headers_map.find("HTTP_METHOD")->second == "POST" || headers_map.find("HTTP_METHOD")->second == "PUT" || headers_map.find("HTTP_METHOD")->second == "PATCH") {
+        body_map = parse_body(request);
+    }
+
+    Request new_request(method, url, headers_map, body_map);
+
+    return new_request;
+
 }
 
 int accept_client_connection(const int sockfd) {

@@ -14,18 +14,19 @@ private:
     HttpMethod method;
     std::string url;
     std::unordered_map<std::string, std::string> headers;
-    std::string body;
+    std::unordered_map<std::string, std::string> body;
 public:
+    Request();
     Request(HttpMethod method,
             std::string url,
             std::unordered_map<std::string,
             std::string> headers,
-            std::string body);
+            std::unordered_map<std::string, std::string> body);
 
     [[nodiscard]] const HttpMethod& get_method() const;
     [[nodiscard]] const std::string& get_url() const;
     [[nodiscard]] const std::unordered_map<std::string, std::string>& get_headers() const;
-    [[nodiscard]] const std::string& get_body() const;
+    [[nodiscard]] const std::unordered_map<std::string, std::string>& get_body () const;
 };
 
 
