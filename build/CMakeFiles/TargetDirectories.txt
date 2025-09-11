@@ -1,3 +1,0 @@
-/home/humblefarmer/projects/cpp_http/build/CMakeFiles/tcp_implementation.dir
-/home/humblefarmer/projects/cpp_http/build/CMakeFiles/edit_cache.dir
-/home/humblefarmer/projects/cpp_http/build/CMakeFiles/rebuild_cache.dir
