@@ -14,9 +14,9 @@
 #include <array>
 #include <unordered_map>
 #include <stdexcept>
-#include "ThreadManager.h"
-#include "Request.h"
-#include "Router.h"
+#include "../include/ThreadManager.h"
+#include "../include/Request.h"
+#include "../include/Router.h"
 
 const char* PORT = "6511";
 const int MAX_THREADS = 8;

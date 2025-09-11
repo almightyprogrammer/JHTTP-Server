@@ -2,8 +2,8 @@
 // Created by humblefarmer on 04/09/2025.
 //
 
-#include "Request.h"
-#include "HttpMethod.h"
+#include "../include/Request.h"
+#include "../include/HttpMethod.h"
 
 Request::Request() : method(HttpMethod::UNKNOWN), url(), headers(), body() {}
 

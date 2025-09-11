@@ -2,7 +2,7 @@
 // Created by humblefarmer on 04/09/2025.
 //
 
-#include "ThreadManager.h"
+#include "../include/ThreadManager.h"
 
 
 

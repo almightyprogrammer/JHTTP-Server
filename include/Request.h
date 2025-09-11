@@ -4,7 +4,7 @@
 
 #ifndef TCP_IMPLEMENTATION_REQUEST_H
 #define TCP_IMPLEMENTATION_REQUEST_H
-#include "HttpMethod.h"
+#include "../include/HttpMethod.h"
 #include <string>
 #include <unordered_map>
 
