@@ -13,6 +13,7 @@
 #include <vector>
 #include <array>
 #include <unordered_map>
+#include <stdexcept>
 #include "ThreadManager.h"
 #include "Request.h"
 #include "Router.h"
@@ -77,25 +78,12 @@ int create_tcp_socket() {
 }
 
 std::unordered_map<std::string, std::string> parse_headers(const std::string& raw_headers) {
-    /*   TODO:
-     *      - this is mad spaghetti (its okay for now since its a prototype, since will be moving to OOP design after the prototype)
-     *          - cleanup conditional statement flow
-     *          - change things to a const type where applicable, will be faster.
-     *
-     *
-     *
-     */
+
     std::string header {};
     size_t i {0};
     std::vector<std::string> parsed_vec {};
     std::unordered_map<std::string, std::string> headers_map {};
 
-    /* =================================================================
-     * Below we split up the request string into n strings where
-     * first line is the start line followed by a bunch of request
-     * header pairs.
-     * =================================================================
-     */
 
     while (i < raw_headers.length()) {
         if (raw_headers[i] != '\n' && raw_headers[i] != '\r') {
@@ -109,25 +97,6 @@ std::unordered_map<std::string, std::string> parse_headers(const std::string& ra
         ++i;
     }
 
-
-    // for (auto vec : parsed_vec) {
-    //     std::cout << vec << "\n";
-    // }
-    /* =================================================================
-     * Below we tokenise the request line into key-value pairs.
-     *
-     * E.g.,
-     *
-     * key : value
-     * HTTP_METHOD: POST
-     * HTTP_URL: /submit-form
-     * HTTP_VERSION: HTTP/1.1
-     * Content-Type: application/x-www-form-urlencoded
-     * Content-Length: 27
-     *  ...
-     *
-     * =================================================================
-     */
 
     for (size_t i{0}; i < parsed_vec.size(); i++) {
         std::string header_token {};
@@ -227,18 +196,13 @@ Request read_http_request(const int client_sockfd) {
             break;
         }
     }
-    /* Change return type to Request
-    *  Make the body parser
-    *  Using the headers and the body construct a new Request object and return this.
-    *
-    */
 
     HttpMethod method {};
     std::string url {headers_map.find("HTTP_URL")->second};
 
 
     for (const auto& header_pair : headers_map) {
-        std::string method_string = header_pair.first;
+        std::string method_string = header_pair.second;
         if (method_string == "GET") { method = HttpMethod::GET;}
         else if (method_string == "POST") {method = HttpMethod::POST;}
         else if (method_string == "PUT") {method = HttpMethod::PUT;}
@@ -274,12 +238,43 @@ int accept_client_connection(const int sockfd) {
     return new_fd;
 }
 
+std::string handle_response(const std::string& handler_output) {
+    std::string response;
+
+    if (handler_output == "___404_NOT_FOUND___") {
+            response =
+                "HTTP/1.1 404 Not Found\r\n"
+                "Content-Type: text/plain\r\n"
+                "Content-Length: 9\r\n"
+                "Connection: close\r\n"
+                "\r\n"
+                "Not Found";
+        } else {
+            response =
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: text/plain\r\n"
+                "Content-Length: " + std::to_string(handler_output.size()) + "\r\n"
+                "Connection: close\r\n"
+                "\r\n" +
+                handler_output;
+        }
+    return response;
+
+
+}
+
+
 
 void handle_client(const int client_sockfd, ThreadManager& thread_manager) {
 
     Request http_request = read_http_request(client_sockfd);
-    std::string response = router.handle(http_request);
-    std::cout << response << "\n";
+    std::string handler_output = router.handle(http_request);
+    std::string response = handle_response(handler_output);
+    ssize_t sent_bytes = send(client_sockfd, response.c_str(), response.size(), 0);
+
+    if (sent_bytes < 0) {
+        perror("sending failed");
+    }
     thread_manager.decrement();
     close(client_sockfd);
 }
@@ -299,7 +294,6 @@ int main() {
         if (thread_manager.get_count() < MAX_THREADS) {
             thread_manager.increment();
             thread_pool.emplace_back(handle_client, client_sockfd, std::ref(thread_manager));
-
         }
     }
 }

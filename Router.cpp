@@ -4,6 +4,7 @@
 
 #include "Router.h"
 #include <string>
+#include <stdexcept>
 
 
 Router::Router() : routes() {}
@@ -18,6 +19,6 @@ std::string Router::handle(const Request &req) const {
     if (it != routes.end()) {
         return it->second(req);
     } else {
-        throw std::logic_error("Such an endpoint does not exist or is yet to be registered in the router.");
+        return "___404_NOT_FOUND___";
     }
 }

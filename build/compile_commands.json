@@ -1,0 +1,26 @@
+[
+{
+  "directory": "/home/humblefarmer/projects/cpp_http/build",
+  "command": "/usr/bin/c++   -g -o CMakeFiles/tcp_implementation.dir/main.cpp.o -c /home/humblefarmer/projects/cpp_http/main.cpp",
+  "file": "/home/humblefarmer/projects/cpp_http/main.cpp",
+  "output": "CMakeFiles/tcp_implementation.dir/main.cpp.o"
+},
+{
+  "directory": "/home/humblefarmer/projects/cpp_http/build",
+  "command": "/usr/bin/c++   -g -o CMakeFiles/tcp_implementation.dir/ThreadManager.cpp.o -c /home/humblefarmer/projects/cpp_http/ThreadManager.cpp",
+  "file": "/home/humblefarmer/projects/cpp_http/ThreadManager.cpp",
+  "output": "CMakeFiles/tcp_implementation.dir/ThreadManager.cpp.o"
+},
+{
+  "directory": "/home/humblefarmer/projects/cpp_http/build",
+  "command": "/usr/bin/c++   -g -o CMakeFiles/tcp_implementation.dir/Request.cpp.o -c /home/humblefarmer/projects/cpp_http/Request.cpp",
+  "file": "/home/humblefarmer/projects/cpp_http/Request.cpp",
+  "output": "CMakeFiles/tcp_implementation.dir/Request.cpp.o"
+},
+{
+  "directory": "/home/humblefarmer/projects/cpp_http/build",
+  "command": "/usr/bin/c++   -g -o CMakeFiles/tcp_implementation.dir/Router.cpp.o -c /home/humblefarmer/projects/cpp_http/Router.cpp",
+  "file": "/home/humblefarmer/projects/cpp_http/Router.cpp",
+  "output": "CMakeFiles/tcp_implementation.dir/Router.cpp.o"
+}
+]
