@@ -10,7 +10,11 @@
 #include <netinet/in.h>
 #include <thread>
 #include <atomic>
+#include <vector>
+#include <array>
+#include <unordered_map>
 #include "ThreadManager.h"
+
 
 const char* PORT = "6511";
 const int MAX_THREADS = 8;
@@ -175,13 +179,13 @@ std::unordered_map<std::string, std::string> parse_headers(const std::string& ra
 }
 
 
-std::string readHttpRequest(const int client_sockfd) {
-
+std::unordered_map<std::string, std::string> readHttpRequest(const int client_sockfd) {
     std::vector<char> buffer(BUFFER_SIZE);
-    std::string request {};
-    ssize_t bytes_read {};
-
-
+    std::string request{};
+    ssize_t bytes_read{};
+    std::unordered_map<std::string, std::string> headers_map{};
+    int content_length = 0;
+    size_t content_begin_idx = 0;
 
     while (true) {
         bytes_read = recv(client_sockfd, buffer.data(), buffer.size(), 0);
@@ -190,7 +194,6 @@ std::string readHttpRequest(const int client_sockfd) {
             perror("failed to receive bytes from client socket");
             break;
         } else if (bytes_read == 0) {
-            // we finished reading the request.
             close(client_sockfd);
             break;
         }
@@ -198,10 +201,31 @@ std::string readHttpRequest(const int client_sockfd) {
         request.append(buffer.data(), bytes_read);
 
         size_t header_end_pos = request.find("\r\n\r\n");
+        if (header_end_pos != std::string::npos && content_length == 0) {
+            headers_map = parse_headers(request.substr(0, header_end_pos));
 
-        if (header_end_pos != std::string::npos) {
+            auto it = headers_map.find("Content-Length");
+            if (it != headers_map.end()) {
+                content_length = std::stoi(it->second);
+            }
+            content_begin_idx = header_end_pos + 4; // \r\n\r\n length is 4
+        }
+
+        if (content_length > 0) {
+            size_t body_received = request.size() - content_begin_idx;
+            if (body_received >= static_cast<size_t>(content_length)) {
+                break;
+            }
+        } else if (header_end_pos != std::string::npos) {
+            break;
         }
     }
+    /* Change return type to Request
+    *  Make the body parser
+    *  Using the headers and the body construct a new Request object and return this.
+    *
+    */
+    return parse_headers(request);
 }
 
 int accept_client_connection(const int sockfd) {
@@ -259,4 +283,3 @@ int main() {
         }
     }
 }
-
