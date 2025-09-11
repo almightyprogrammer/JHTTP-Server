@@ -15,12 +15,12 @@
 #include <unordered_map>
 #include "ThreadManager.h"
 #include "Request.h"
-
+#include "Router.h"
 
 const char* PORT = "6511";
 const int MAX_THREADS = 8;
 const int BUFFER_SIZE = 8192;
-
+Router router{};
 
 int create_tcp_socket() {
     struct addrinfo hints{};
@@ -110,9 +110,9 @@ std::unordered_map<std::string, std::string> parse_headers(const std::string& ra
     }
 
 
-    for (auto vec : parsed_vec) {
-        std::cout << vec << "\n";
-    }
+    // for (auto vec : parsed_vec) {
+    //     std::cout << vec << "\n";
+    // }
     /* =================================================================
      * Below we tokenise the request line into key-value pairs.
      *
@@ -145,7 +145,6 @@ std::unordered_map<std::string, std::string> parse_headers(const std::string& ra
                     } else if (count == 2) {
                         headers_map.insert({"HTTP_VERSION", header_token});
                     }
-                    std::cout << count << "\n";
                     ++count;
                     header_token.clear();
                 }
@@ -178,11 +177,14 @@ std::unordered_map<std::string, std::string> parse_headers(const std::string& ra
 
     return headers_map;
 }
+
+
 std::unordered_map<std::string, std::string> parse_body(std::string request) {
     throw std::logic_error("Not implemented yet");
 }
 
-Request readHttpRequest(const int client_sockfd) {
+
+Request read_http_request(const int client_sockfd) {
     std::vector<char> buffer(BUFFER_SIZE);
     std::string request{};
     ssize_t bytes_read{};
@@ -237,23 +239,14 @@ Request readHttpRequest(const int client_sockfd) {
 
     for (const auto& header_pair : headers_map) {
         std::string method_string = header_pair.first;
-        if (method_string == "GET") {
-            method = HttpMethod::GET;
-        } else if (method_string == "POST") {
-            method = HttpMethod::POST;
-        } else if (method_string == "PUT") {
-            method = HttpMethod::PUT;
-        } else if (method_string == "PATCH") {
-            method = HttpMethod::PATCH;
-        } else if (method_string == "DELETE") {
-            method = HttpMethod::DELETE;
-        } else if (method_string == "HEAD") {
-            method = HttpMethod::HEAD;
-        } else if (method_string == "OPTIONS") {
-            method = HttpMethod::OPTIONS;
-        } else if (method_string == "UNKNOWN") {
-            method = HttpMethod::UNKNOWN;
-        }
+        if (method_string == "GET") { method = HttpMethod::GET;}
+        else if (method_string == "POST") {method = HttpMethod::POST;}
+        else if (method_string == "PUT") {method = HttpMethod::PUT;}
+        else if (method_string == "PATCH") {method = HttpMethod::PATCH;}
+        else if (method_string == "DELETE") {method = HttpMethod::DELETE;}
+        else if (method_string == "HEAD") {method = HttpMethod::HEAD;}
+        else if (method_string == "OPTIONS") {method = HttpMethod::OPTIONS;}
+        else if (method_string == "UNKNOWN") {method = HttpMethod::UNKNOWN;}
     }
 
 
@@ -266,6 +259,7 @@ Request readHttpRequest(const int client_sockfd) {
     return new_request;
 
 }
+
 
 int accept_client_connection(const int sockfd) {
 
@@ -281,25 +275,11 @@ int accept_client_connection(const int sockfd) {
 }
 
 
-
 void handle_client(const int client_sockfd, ThreadManager& thread_manager) {
 
-    char buff[8192];
-    ssize_t num_bytes{};
-
-    while ((num_bytes = recv(client_sockfd, buff, sizeof(buff) - 1, 0)) > 0) {
-        buff[num_bytes] = '\0';
-
-        if (strcmp(&buff[0], "quit\r\n") == 0 || strcmp(&buff[0], "quit\n") == 0) {
-            std::cout<< "Client disconnected" << "\n";
-            close(client_sockfd);
-            break;
-        }
-
-        if (num_bytes > 0) {
-            send(client_sockfd, buff, num_bytes, 0);
-        }
-    }
+    Request http_request = read_http_request(client_sockfd);
+    std::string response = router.handle(http_request);
+    std::cout << response << "\n";
     thread_manager.decrement();
     close(client_sockfd);
 }
@@ -309,6 +289,7 @@ int main() {
     ThreadManager thread_manager = ThreadManager();
     std::vector<std::thread> thread_pool {};
     int sockfd {create_tcp_socket()};
+    router.add_route("/greetings", [](const Request&) {return "Hello";});
     std::cout << "waiting for a client to connect..." << "\n";
 
 

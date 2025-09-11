@@ -9,4 +9,6 @@ add_executable(tcp_implementation main.cpp
         Request.cpp
         Request.h
         HttpMethod.h
+        Router.cpp
+        Router.h
 )

@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <functional>
 #include "Request.h"
-
+#include <string>
 
 #ifndef TCP_IMPLEMENTATION_ROUTER_H
 #define TCP_IMPLEMENTATION_ROUTER_H
@@ -14,7 +14,7 @@
 class Router {
 
 public:
-    using Handler = std::function<void(const Request&)>;
+    using Handler = std::function<std::string(const Request&)>;
     Router();
 
 private:
@@ -22,7 +22,8 @@ private:
 
 public:
     void add_route(const std::string url, Handler handler);
-    void handle(const Request& req) const;
+
+    std::string handle(const Request &req) const;
 };
 
 
