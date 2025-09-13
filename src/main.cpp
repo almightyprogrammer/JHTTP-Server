@@ -264,7 +264,6 @@ std::string handle_response(const std::string& handler_output) {
 }
 
 
-
 void handle_client(const int client_sockfd, ThreadManager& thread_manager) {
 
     Request http_request = read_http_request(client_sockfd);

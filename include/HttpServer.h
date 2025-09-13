@@ -41,37 +41,13 @@ private:
     struct addrinfo* res{};
     struct addrinfo* p{};
     int sockfd{};
-    const char* PORT = "6511";
-
+    const char* PORT{"6511"};
+    Router router{};
 
 public:
-    HttpServer() : hints(), res(), p(), sockfd() {
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_PASSIVE;
-
-        int status = getaddrinfo(nullptr, PORT, &hints, &res);
-
-        if (status < 0) {
-            perror("getaddrinfo failure");
-            exit(EXIT_FAILURE);
-        }
-
-        for (p = res; p != nullptr; p = p->ai_next) {
-            sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-
-            if (sockfd < 0) {
-                perror("creating socket error");
-                continue;
-            }
-
-
-        }
-    }
-
-
-
-
+    HttpServer() : hints(), res(), p(), sockfd() {};
+    ~HttpServer() {};
+    void handle_client(const int client_sockfd);
+    int accept_client_connection();
 
 };
