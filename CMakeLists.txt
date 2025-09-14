@@ -12,4 +12,6 @@ add_executable(tcp_implementation
         include/HttpMethod.h
         src/Router.cpp
         include/Router.h
+        include/HttpServer.h
+        src/HttpServer.cpp
 )
