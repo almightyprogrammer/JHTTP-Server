@@ -43,11 +43,21 @@ private:
     int sockfd{};
     const char* PORT{"6511"};
     Router router{};
+    const int BUFFER_SIZE{8192};
+    ThreadManager thread_manager = ThreadManager();
+    
 
 public:
-    HttpServer() : hints(), res(), p(), sockfd() {};
-    ~HttpServer() {};
+    HttpServer();
+    ~HttpServer();
     void handle_client(const int client_sockfd);
     int accept_client_connection();
+    Request read_http_request(const int client_sockfd);
+    std::unordered_map<std::string, std::string> parse_headers(const std::string& raw_headers);
+    std::unordered_map<std::string, std::string> parse_body(std::string request);
+    std::string handle_response(const std::string& handler_output);
+    int get_sockfd();
+    Router& get_router();
+    ThreadManager& get_thread_manager();
 
 };
