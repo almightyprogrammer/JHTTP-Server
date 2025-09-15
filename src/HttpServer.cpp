@@ -143,6 +143,7 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
     int content_length = 0;
     size_t content_begin_idx = 0;
     Request http_request{};
+    size_t body_received{};
 
     while (true) {
         bytes_read = recv(client_sockfd, buffer.data(), buffer.size(), 0);
@@ -169,7 +170,7 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
         }
 
         if (content_length > 0) {
-            size_t body_received = request.size() - content_begin_idx;
+            body_received = request.size() - content_begin_idx;
             if (body_received >= static_cast<size_t>(content_length)) {
                 break;
             }
@@ -196,7 +197,7 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
 
 
     if (headers_map.find("HTTP_METHOD")->second == "POST" || headers_map.find("HTTP_METHOD")->second == "PUT" || headers_map.find("HTTP_METHOD")->second == "PATCH") {
-        body_map = parse_body(request);
+        body_map = parse_body(request.substr(body_received, std::string::npos));
     }
 
     Request new_request(method, url, headers_map, body_map);
@@ -208,8 +209,8 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
 }
  
 
-std::unordered_map<std::string, std::string> HttpServer::parse_body(std::string request) {
-    throw std::logic_error("Not implemented yet");
+std::unordered_map<std::string, std::string> HttpServer::parse_body(std::string body_str) {
+    
 }
 
 
@@ -257,7 +258,7 @@ std::string HttpServer::handle_response(const std::string& handler_output) {
         } else {
             response =
                 "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/plain\r\n"
+                "Content-Type: text/html\r\n"
                 "Content-Length: " + std::to_string(handler_output.size()) + "\r\n"
                 "Connection: close\r\n"
                 "\r\n" +
