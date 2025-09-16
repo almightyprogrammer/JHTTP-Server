@@ -4,7 +4,7 @@
 
 
 #include "../include/HttpServer.h"
-
+#include "../include/ResponseProcessor.h"
 
 
 
@@ -64,76 +64,6 @@ HttpServer::~HttpServer()  {
 
 
 
-std::unordered_map<std::string, std::string> HttpServer::parse_headers(const std::string& raw_headers) {
-
-    std::string header {};
-    size_t i {0};
-    std::vector<std::string> parsed_vec {};
-    std::unordered_map<std::string, std::string> headers_map {};
-
-
-    while (i < raw_headers.length()) {
-        if (raw_headers[i] != '\n' && raw_headers[i] != '\r') {
-            header.push_back(raw_headers[i]);
-        } else if (raw_headers[i] == '\r') {
-            header.push_back(' ');
-            parsed_vec.push_back(header);
-            header.clear();
-            ++i;
-        }
-        ++i;
-    }
-
-
-    for (size_t i{0}; i < parsed_vec.size(); i++) {
-        std::string header_token {};
-        if (i == 0) {
-            size_t j{0};
-            int count{0};
-            while (j < parsed_vec[0].length()) {
-                if (parsed_vec[0][j] != ' ') {
-                    header_token.push_back(parsed_vec[0][j]);
-                } else {
-                    if (count == 0) {
-                        headers_map.insert({"HTTP_METHOD", header_token});
-                    } else if (count == 1) {
-                        headers_map.insert({"HTTP_URL", header_token});
-                    } else if (count == 2) {
-                        headers_map.insert({"HTTP_VERSION", header_token});
-                    }
-                    ++count;
-                    header_token.clear();
-                }
-                ++j;
-            }
-        } else {
-            size_t j{0};
-            int count{0};
-            std::array<std::string, 2> header_token_pair{};
-            while (j < parsed_vec[i].length()) {
-                if (parsed_vec[i][j] == ' ') {
-                    if (count == 0) {
-                        header_token_pair[0] = header_token;
-                        ++count;
-                    } else {
-                        header_token_pair[1] = header_token;
-                        headers_map.insert({header_token_pair[0], header_token_pair[1]});
-                        count = 0;
-                    }
-                    header_token.clear();
-                } else if (parsed_vec[i][j] == '\r' || parsed_vec[i][j] == '\n') {
-                    ;
-                } else {
-                    header_token.push_back(parsed_vec[i][j]);
-                }
-                ++j;
-            }
-        }
-    }
-
-    return headers_map;
-}
-
 Request HttpServer::read_http_request(const int client_sockfd)  {
     std::vector<char> buffer(BUFFER_SIZE);
     std::string request{};
@@ -160,7 +90,7 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
 
         size_t header_end_pos = request.find("\r\n\r\n");
         if (header_end_pos != std::string::npos && content_length == 0) {
-            headers_map = parse_headers(request.substr(0, header_end_pos));
+            headers_map = parser.parse_headers(request.substr(0, header_end_pos));
 
             auto it = headers_map.find("Content-Length");
             if (it != headers_map.end()) {
@@ -197,7 +127,9 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
 
 
     if (headers_map.find("HTTP_METHOD")->second == "POST" || headers_map.find("HTTP_METHOD")->second == "PUT" || headers_map.find("HTTP_METHOD")->second == "PATCH") {
-        body_map = parse_body(request.substr(body_received, std::string::npos));
+        auto it = headers_map.find("Content-Type");
+        
+        body_map = response_processor.parse_body(request.substr(body_received, std::string::npos), it->second);
     }
 
     Request new_request(method, url, headers_map, body_map);
@@ -209,9 +141,7 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
 }
  
 
-std::unordered_map<std::string, std::string> HttpServer::parse_body(std::string body_str) {
-    
-}
+
 
 
 
@@ -244,40 +174,4 @@ int HttpServer::accept_client_connection() {
 }
  
 
-std::string HttpServer::handle_response(const std::string& handler_output) {
-    std::string response;
 
-    if (handler_output == "___404_NOT_FOUND___") {
-            response =
-                "HTTP/1.1 404 Not Found\r\n"
-                "Content-Type: text/plain\r\n"
-                "Content-Length: 9\r\n"
-                "Connection: close\r\n"
-                "\r\n"
-                "Not Found";
-        } else {
-            response =
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-                "Content-Length: " + std::to_string(handler_output.size()) + "\r\n"
-                "Connection: close\r\n"
-                "\r\n" +
-                handler_output;
-        }
-    return response;
-
-
-}
-
-
-int HttpServer::get_sockfd() {
-    return sockfd;
-}
-
-Router& HttpServer::get_router() {
-    return router;
-}
-
-ThreadManager& HttpServer::get_thread_manager() {
-    return thread_manager;
-}
