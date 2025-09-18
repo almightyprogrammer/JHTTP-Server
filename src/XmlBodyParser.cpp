@@ -10,6 +10,6 @@ bool XmlBodyParser::supports(const std::string& content_type) {
 
 }
 
-std::unordered_map<std::string, std::string> parse(const std::string& body_str) {
+std::unordered_map<std::string, std::string> XmlBodyParser::parse(const std::string& body_str) {
 
 }

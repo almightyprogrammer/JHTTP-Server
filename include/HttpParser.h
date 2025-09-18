@@ -5,21 +5,11 @@
 #include <string>
 
 class HttpParser {
+public:
+    HttpParser() = default;
 
-    public:
-        HttpParser() = default;
-        std::unordered_map<std::string, std::string>& parse_headers(const std::string& raw_headers);
-
+    std::unordered_map<std::string, std::string>
+    parse_headers(const std::string& raw_headers);
 };
-
-
-
-
-
-
-
-
-
-
 
 #endif //TCP_IMPLEMENTATION_HTTPPARSER_H

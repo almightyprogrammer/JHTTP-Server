@@ -4,11 +4,11 @@
 
 #include "IBodyParser.h"
 
-class JsonBodyParser : IBodyParser {
+class JsonBodyParser : public IBodyParser {
 
     public:
         bool supports(const std::string& content_type);
-        std::unordered_map<std::string, std::string>& parse(const std::string& body_str);
+        std::unordered_map<std::string, std::string> parse(const std::string& body_str);
 
 };
 

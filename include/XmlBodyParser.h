@@ -7,13 +7,13 @@
 #include <unordered_map>
 #include "IBodyParser.h"
 
-class XmlBodyParser : IBodyParser {
+class XmlBodyParser : public IBodyParser {
 
     public:
         bool supports(const std::string& content_type);
-        std::unordered_map<std::string, std::string>& parse(const std::string& body_str);
+        std::unordered_map<std::string, std::string> parse(const std::string& body_str);
 
-}
+};
 
 
 

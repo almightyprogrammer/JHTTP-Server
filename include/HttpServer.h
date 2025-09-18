@@ -23,6 +23,7 @@
 #include "Router.h"
 #include "HttpParser.h"
 #include "ResponseProcessor.h"
+#include "ResponseGenerator.h"
 
 
 
@@ -46,8 +47,10 @@ private:
     Router router{};
     const int BUFFER_SIZE{8192};
     ThreadManager thread_manager = ThreadManager();
+    std::vector<std::thread> thread_pool {};
     HttpParser parser{};
     ResponseProcessor response_processor {};
+    ResponseGenerator response_generator {};
 
     
 
@@ -57,4 +60,5 @@ public:
     void handle_client(const int client_sockfd);
     int accept_client_connection();
     Request read_http_request(const int client_sockfd);
+    void start();
 };

@@ -1,10 +1,12 @@
-#ifndef GREETINGS_H
-#define GREETINGS_H
+#ifndef TCP_IMPLEMENTATION_ROUTINGS_H
+#define TCP_IMPLEMENTATION_ROUTINGS_H
+
 
 #include <string>
 #include "../include/Request.h"
+#include <unordered_map>
+#include <tuple>
 
-
-std::string handle_greetings();
+std::tuple<std::string, std::string> handle_greetings(const Request& req);
 
 #endif

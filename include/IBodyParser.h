@@ -8,8 +8,8 @@
 class IBodyParser {
     public:
         virtual ~IBodyParser() = default;
-        virtual std::unordered_map<std::string, std::string>& parse(const std::string& body_str); 
-        virtual bool supports(const std::string& content_type);
+        virtual std::unordered_map<std::string, std::string> parse(const std::string& body_str) = 0; 
+        virtual bool supports(const std::string& content_type) = 0;
     };
 
 

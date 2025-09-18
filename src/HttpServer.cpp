@@ -5,8 +5,11 @@
 
 #include "../include/HttpServer.h"
 #include "../include/ResponseProcessor.h"
+#include "../include/ResponseGenerator.h"
+#include "../include/Response.h"
+#include "../include/routings.h"
 
-
+const int MAX_THREADS = 10;
 
 HttpServer::HttpServer()  {
     memset(&hints, 0, sizeof(hints));
@@ -74,6 +77,7 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
     size_t content_begin_idx = 0;
     Request http_request{};
     size_t body_received{};
+
 
     while (true) {
         bytes_read = recv(client_sockfd, buffer.data(), buffer.size(), 0);
@@ -148,8 +152,8 @@ Request HttpServer::read_http_request(const int client_sockfd)  {
 void HttpServer::handle_client(const int client_sockfd) {
 
     Request http_request = read_http_request(client_sockfd);
-    std::string handler_output = router.handle(http_request);
-    std::string response = handle_response(handler_output);
+    Response handler_output = router.handle(http_request);
+    std::string response = response_generator.generate_new_response(handler_output);
     ssize_t sent_bytes = send(client_sockfd, response.c_str(), response.size(), 0);
 
     if (sent_bytes < 0) {
@@ -174,4 +178,20 @@ int HttpServer::accept_client_connection() {
 }
  
 
+void HttpServer::start() {
 
+    router.add_route("/greetings",handle_greetings);
+    std::cout << "waiting for a client to connect..." << "\n";
+    while (true) {
+        int client_sockfd {accept_client_connection()};
+        std::cout << "Accepted client on socket fd: " << client_sockfd << "\n";
+        if (thread_manager.get_count() < MAX_THREADS) {
+            thread_manager.increment();
+            thread_pool.emplace_back([this, client_sockfd]() {
+                this->handle_client(client_sockfd);
+            });
+        }
+    }
+
+
+}

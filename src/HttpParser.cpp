@@ -5,14 +5,12 @@
 #include <vector>
 #include <array>
 
-
-std::unordered_map<std::string, std::string>& parse_headers(const std::string& raw_request) {
-
+std::unordered_map<std::string, std::string>
+HttpParser::parse_headers(const std::string& raw_request) {
     std::string header {};
     size_t i {0};
     std::vector<std::string> parsed_vec {};
     std::unordered_map<std::string, std::string> headers_map {};
-
 
     while (i < raw_request.length()) {
         if (raw_request[i] != '\n' && raw_request[i] != '\r') {
@@ -25,7 +23,6 @@ std::unordered_map<std::string, std::string>& parse_headers(const std::string& r
         }
         ++i;
     }
-
 
     for (size_t i{0}; i < parsed_vec.size(); i++) {
         std::string header_token {};
@@ -64,7 +61,7 @@ std::unordered_map<std::string, std::string>& parse_headers(const std::string& r
                     }
                     header_token.clear();
                 } else if (parsed_vec[i][j] == '\r' || parsed_vec[i][j] == '\n') {
-                    ;
+
                 } else {
                     header_token.push_back(parsed_vec[i][j]);
                 }
@@ -74,9 +71,4 @@ std::unordered_map<std::string, std::string>& parse_headers(const std::string& r
     }
 
     return headers_map;
-}
-
-
-std::unordered_map<std::string, std::string>& HttpParser::parse_body(const std::string& body_str) {
-    
 }
